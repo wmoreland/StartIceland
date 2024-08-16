@@ -33,10 +33,13 @@ jobs:
         # Copy the start_iceland folder excluding certain files
         rsync -av --exclude='README.html' --exclude='README.txt' --exclude='help/' --exclude='i18n/' --exclude='scripts/' --exclude='test/' start_iceland/ qgis_plugin/start_iceland/
 
+        # Copy the LICENSE file to the zip directory
+        cp LICENSE qgis_plugin/
+
         # Change to the directory containing the files
         cd qgis_plugin
 
-        # Create a zip file of the directory
+        # Create a zip file of the directory including the LICENSE file
         zip -r ../start_iceland.zip .
 
     - name: Create a GitHub Release
