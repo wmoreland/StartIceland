@@ -1,0 +1,65 @@
+name: Create QGIS Plugin Zip
+
+on:
+  workflow_dispatch: # This allows the action to be manually triggered
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout the code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Extract version from metadata.txt
+      id: extract_version
+      run: |
+        # Python script to extract the version
+        VERSION=$(python -c "
+import configparser
+config = configparser.ConfigParser()
+config.read('start_iceland/metadata.txt')
+print(config['general']['version'])
+        ")
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Create the zip folder for QGIS Plugin
+      run: |
+        # Create a directory for the zip file
+        mkdir qgis_plugin
+
+        # Copy the start_iceland folder excluding certain files
+        rsync -av --exclude='README.html' --exclude='README.txt' --exclude='help/' --exclude='i18n/' --exclude='scripts/' --exclude='test/' start_iceland/ qgis_plugin/start_iceland/
+
+        # Change to the directory containing the files
+        cd qgis_plugin
+
+        # Create a zip file of the directory
+        zip -r ../start_iceland.zip .
+
+    - name: Create a GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ env.VERSION }} # Use the extracted version
+        release_name: "QGIS Plugin Release v${{ env.VERSION }}" # Use the extracted version in the release name
+        body: "This release contains version ${{ env.VERSION }} of the QGIS plugin."
+        draft: false
+        prerelease: false
+
+    - name: Upload the zip file to the Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./start_iceland.zip
+        asset_name: start_iceland_v${{ env.VERSION }}.zip # Include version in the asset name
+        asset_content_type: application/zip
