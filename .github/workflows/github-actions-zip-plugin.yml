@@ -19,13 +19,7 @@ jobs:
     - name: Extract version from metadata.txt
       id: extract_version
       run: |
-        VERSION=$(python - <<EOF
-import configparser
-config = configparser.ConfigParser()
-config.read('start_iceland/metadata.txt')
-print(config['general']['version'])
-EOF
-        )
+        VERSION=$(python -c "import configparser; config = configparser.ConfigParser(); config.read('start_iceland/metadata.txt'); print(config['general']['version'])")
         echo "VERSION=$VERSION" >> $GITHUB_ENV
 
     - name: Create the zip folder for QGIS Plugin
